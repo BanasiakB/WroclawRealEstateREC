@@ -1,9 +1,11 @@
-from collect_data.googledrive import upload_image_to_drive
-from collect_data.scrap_utils import request_url_get_soup
-# import pandas as pd
 import time
+
+# import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+
+from collect_data.googledrive import upload_image_to_drive
+from collect_data.scrap_utils import request_url_get_soup
 
 
 def scrapper() -> None:
