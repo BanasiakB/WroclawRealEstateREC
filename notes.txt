@@ -1,0 +1,101 @@
+----- local master with 2 workers and jupyter
+network_name="spark-net";
+spark_version="3.5.0";
+docker network create -d bridge $network_name;
+docker run -d --name spark-master \
+  --network=$network_name \
+  -p 8080:8080 \
+  -p 7077:7077 \
+  -e SPARK_MODE=master \
+  -e SPARK_USER=spark \
+  bitnami/spark:$spark_version;
+docker run -d --name spark-worker-1 \
+  --network=$network_name \
+  -e SPARK_MODE=worker \
+  -e SPARK_MASTER_URL=spark://spark-master:7077 \
+  -e SPARK_WORKER_MEMORY=1G \
+  -e SPARK_WORKER_CORES=1 \
+  bitnami/spark:$spark_version;
+docker run -d --name spark-worker-2 \
+  --network=$network_name \
+  -e SPARK_MODE=worker \
+  -e SPARK_MASTER_URL=spark://spark-master:7077 \
+  -e SPARK_WORKER_MEMORY=1G \
+  -e SPARK_WORKER_CORES=1 \
+  bitnami/spark:$spark_version;
+docker run -it --name spark-jupyter \
+  --network=$network_name \
+  -p 8888:8888 \
+  -p 4040:4040 \
+  -p 4041:4041 \
+  jupyter/pyspark-notebook
+
+
+
+
+----- master with 2 workers and jupyter on 2 machines
+docker swarm init
+
+network_name="spark-overlay-net";
+spark_version="3.5.0";
+
+docker network create --driver overlay --attachable spark-overlay-net
+docker run -d --name spark-master \
+  --network=$network_name \
+  -p 8080:8080 \
+  -p 7077:7077 \
+  -e SPARK_MODE=master \
+  -e SPARK_USER=spark \
+  bitnami/spark:$spark_version;
+docker run -d --name spark-worker-1 \
+  --network=$network_name \
+  -e SPARK_MODE=worker \
+  -e SPARK_MASTER_URL=spark://spark-master:7077 \
+  -e SPARK_WORKER_MEMORY=1G \
+  -e SPARK_WORKER_CORES=1 \
+  bitnami/spark:$spark_version;
+
+docker run -d --name spark-worker-2 \
+  --network=$network_name \
+  -e SPARK_MODE=worker \
+  -e SPARK_MASTER_URL=spark://spark-master:7077 \
+  -e SPARK_WORKER_MEMORY=1G \
+  -e SPARK_WORKER_CORES=1 \
+  bitnami/spark:$spark_version;
+docker run -it --name spark-jupyter \
+  --network=$network_name \
+  -p 8888:8888 \
+  -p 4040:4040 \
+  -p 4041:4041 \
+  jupyter/pyspark-notebook
+
+
+-----
+bitnsmi/pyspark:latest
+python 3.11.9
+spark 3.5.1
+
+bitnsmi/pyspark:latest
+python 3.11.8
+spark 3.5.0
+
+jupyter-pyspark:latest
+python 3.11.6
+spark 3.5.0
+
+-----
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.master("spark://spark-master:7077").getOrCreate()
+sc = spark.sparkContext
+
+rdd = sc.parallelize(range(100 + 1))
+rdd.sum()
+
+
+-----
+docker-compose up --build
+
+-----
+
+
