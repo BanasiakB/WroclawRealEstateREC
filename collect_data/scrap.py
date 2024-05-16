@@ -15,17 +15,26 @@ userAgents=['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36']
 
 
+def request_url(url: str):
+    response = requests.get(url, headers={'User-Agent': random.choice(userAgents)})
+    
+    if response.status_code != 200:
+        raise ConnectionError(f"Failed to fetch search results. Status code: {response.status_code}")
+    return response
+
+def request_url_get_soup(url: str):
+    response = request_url(url=url)
+    soup = BeautifulSoup(response.text, "html.parser")
+    return soup
+
+
 def scrapper() -> None:
     # download data - Done
     # Images send to Google Drive - Done
     # tabular data send to SQL
 
     search_url = 'https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/dolnoslaskie/wroclaw/wroclaw/wroclaw?viewType=listing'
-    response = requests.get(search_url, headers={'User-Agent': random.choice(userAgents)})
-    
-    if response.status_code != 200:
-        raise ConnectionError(f"Failed to fetch search results. Status code: {response.status_code}")
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = request_url_get_soup(url=search_url)
 
     links = soup.find("div", {"data-cy": "search.listing.organic"}).find_all('a', {"data-cy": "listing-item-link"})
     for link in links:
@@ -38,7 +47,7 @@ def scrapper() -> None:
             print('Connection Error during scrapping details.')
         return # USUNAĆ W PRZYSZŁOŚCI - BLOKUJE NA JEDNEJ OBSERWACJI 
     return
- 
+
 
 def scrap_details(link: str) -> None:
     # scrap_photos(link)  # LEPIEJ ODHASHOWAĆ DOPIERO JAK JUŻ BD BĘDZIE DZIAŁAĆ
@@ -52,10 +61,7 @@ def upload_tabular_data(data: dict, link: str) -> None:
 
 def scrap_tabular_data(link: str) -> None:
     url = 'https://www.otodom.pl/' + link   # link używamy jako id do bazy danych ?
-    response = requests.get(url, headers={'User-Agent': random.choice(userAgents)})
-    if response.status_code != 200:
-        raise ConnectionError(f"Failed to fetch search results. Status code: {response.status_code}")
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = request_url_get_soup(url=url)
     data = {}
 
     try:
