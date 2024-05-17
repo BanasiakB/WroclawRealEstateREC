@@ -24,6 +24,7 @@ class OfferPageHandler:
     url_base: str = "https://www.otodom.pl"
     url_extension: str
     page_scrapped: bool
+    page_soup: Optional[BeautifulSoup] = None
     data: Dict[str, Any]
     
     def __init__(
@@ -39,21 +40,20 @@ class OfferPageHandler:
     def data(self) -> Dict[str, Any]:
         return self._data.copy()
     
-    def _find_in_soup(self, soup: BeautifulSoup, *args) -> Optional[str]:
+    def _find_in_soup(self, *args) -> Optional[str]:
         """
         Method for searching through the soup for given args and returning found value.
         If an AttributeError occurs, it is cought and the None value is being returned.
 
-        :param soup: BeautifulSoup object created with the response of response from listing website
         :param *args: all the latter arguments passed will be input to the BeautifulSoup find method
         :return: Value found with the given bs4 search parameters or None if an error occured during th search
         """
         try:
-            return soup.find(*args).get_text()
+            return self.page_soup.find(*args).get_text()
         except AttributeError:
             return None
 
-    def scrap_page(self, skip_if_already_scrapped: bool = True) -> bool:
+    def scrap_page_tabular(self, skip_if_already_scrapped: bool = True) -> bool:
         """
         Method performs scrapping of the offer page that its extension_url points to. Results are saved to the object's data
         dictionary and the page_scrapped bool is being switched to True when succeeded. Method returns bool value. True value
@@ -65,13 +65,13 @@ class OfferPageHandler:
         if self.page_scrapped and skip_if_already_scrapped:
             return False
 
-        soup = request_url_get_soup(url=self.url_base + self.url_extension)
+        self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
 
-        self._data["Price"] = self._find_in_soup(soup,'strong', {'aria-label': "Cena"})
-        self._data["loc"] = self._find_in_soup(soup,'a', {'aria-label': "Adres"})
-        self._data["Description"] = self._find_in_soup(soup, 'div', {"data-cy": "adPageAdDescription"})
+        self._data["Price"] = self._find_in_soup('strong', {'aria-label': "Cena"})
+        self._data["loc"] = self._find_in_soup('a', {'aria-label': "Adres"})
+        self._data["Description"] = self._find_in_soup('div', {"data-cy": "adPageAdDescription"})
         for column_name, table_value in expected_info.items():
-            self._data[column_name] = self._find_in_soup(soup, 'div', {"data-testid": table_value})
+            self._data[column_name] = self._find_in_soup('div', {"data-testid": table_value})
 
         self.page_scrapped = True
         return True
