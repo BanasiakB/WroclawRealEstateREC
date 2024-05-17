@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from bs4 import BeautifulSoup
 
-from ..scrap_utils import request_url, request_url_get_soup
+from ..scrap_utils import request_url_get_soup
 from .otodom_offer_page_handler import OfferPageHandler
 
 
@@ -15,7 +15,7 @@ class ListingPageHandler:
     page_num_current: int = 1
     page_num_max: Optional[int] = None
 
-    url_base: str = "https://www.otodom.pl"
+    url_base: str = "https://www.otodom.pl/"
     url_extension: str = "pl/wyniki/sprzedaz/mieszkanie/dolnoslaskie/wroclaw/wroclaw/wroclaw?viewType=listing"
     
     _page_num_max_without_limit_set = 10
@@ -71,7 +71,7 @@ class ListingPageHandler:
 
         # Update 'page_num_max' only if the value was found on the page and if it is not already set.
         # One exception to the latter is when explicitly said to overwrite 'page_num_max' by 'update_page_num_max_once_set'
-        page_num_max = self._get_page_num_max(suop=soup_page)
+        page_num_max = self._get_page_num_max(soup=soup_page)
         if page_num_max is not None and (self.page_num_max is None or update_page_num_max_once_set):
             self.page_num_max = page_num_max
 
@@ -112,7 +112,7 @@ class ListingPageHandler:
         soup = request_url_get_soup(url=self.url_current)
         self._update_meta(soup_page=soup)
 
-        links = self._get_offer_links_from_soup
+        links = self._get_offer_links_from_soup(soup=soup)
         for url_external in links:
             self._listed_pages_link_extensions.append(url_external)
 
