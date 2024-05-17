@@ -23,7 +23,8 @@ class OfferPageHandler:
     """
     url_base: str = "https://www.otodom.pl"
     url_extension: str
-    page_scrapped: bool
+    page_scrapped_tabular: bool = False
+    page_scrapped_image: bool = False
     page_soup: Optional[BeautifulSoup] = None
     data: Dict[str, Any]
     
@@ -32,13 +33,18 @@ class OfferPageHandler:
         url_extension: str
     ) -> None:
         self.url_extension = url_extension
-        self.page_scrapped = self._check_if_page_under_url_was_scrapped()
+        self.page_scrapped_tabular = self._check_if_page_under_url_was_scrapped_tabular()
+        self.page_scrapped_iamge = self._check_if_page_under_url_was_scrapped_image()
 
         self._data = {}
     
     @property
     def data(self) -> Dict[str, Any]:
         return self._data.copy()
+    
+    @property
+    def page_scrapped(self) -> bool:
+        return self.page_scrapped_tabular and self.page_scrapped_image
     
     def _find_in_soup(self, *args) -> Optional[str]:
         """
@@ -62,10 +68,11 @@ class OfferPageHandler:
 
         :param skip_if_already_scrapped: bool indicating if the scrapping shoudl be skipped if the page was already scrapped, defaults to True
         """
-        if self.page_scrapped and skip_if_already_scrapped:
+        if self.page_scrapped_tabular and skip_if_already_scrapped:
             return False
 
-        self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
+        if self.page_soup is None:
+            self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
 
         self._data["Price"] = self._find_in_soup('strong', {'aria-label': "Cena"})
         self._data["loc"] = self._find_in_soup('a', {'aria-label': "Adres"})
@@ -73,12 +80,24 @@ class OfferPageHandler:
         for column_name, table_value in expected_info.items():
             self._data[column_name] = self._find_in_soup('div', {"data-testid": table_value})
 
-        self.page_scrapped = True
+        self.page_scrapped_tabular = True
         return True
+
+    def scrap_page_images(self, skip_if_already_scrapped: bool = True) -> bool:
+        if self.page_scrapped_tabular and skip_if_already_scrapped:
+            return False
+
+        if self.page_soup is None:
+            self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
     
-    def _check_if_page_under_url_was_scrapped(self) -> bool:
+    def _check_if_page_under_url_was_scrapped_tabular(self) -> bool:
         """
-        Method checks if the page was already scrapped by fetching the data from the storage database and checking if the extension url
+        Method checks if the page's tabular data was already scrapped by fetching the data from the storage database
+        and checking if the extension url is already in there.
         exists there.
         """
+        return False
+    
+    def _check_if_page_under_url_was_scrapped_image(self) -> bool:
+        """Method checks if the page's images were already scrapped by fetching the data from the google drive."""
         return False
