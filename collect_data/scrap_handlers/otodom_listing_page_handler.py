@@ -15,8 +15,8 @@ class ListingPageHandler:
     page_num_current: int = 1
     page_num_max: Optional[int] = None
 
-    url_base: str = "https://www.otodom.pl/"
-    url_extension: str = "pl/wyniki/sprzedaz/mieszkanie/dolnoslaskie/wroclaw/wroclaw/wroclaw?viewType=listing"
+    url_base: str = "https://www.otodom.pl"
+    url_extension: str = "/pl/wyniki/sprzedaz/mieszkanie/dolnoslaskie/wroclaw/wroclaw/wroclaw?viewType=listing"
     
     _page_num_max_without_limit_set = 10
 
@@ -113,9 +113,9 @@ class ListingPageHandler:
         self._update_meta(soup_page=soup)
 
         links = self._get_offer_links_from_soup(soup=soup)
-        for url_external in links:
-            self._listed_pages_link_extensions.append(url_external)
+        for url_extension in links:
+            self._listed_pages_link_extensions.append(url_extension)
 
-            offer_handler = OfferPageHandler(url_external=self.url_base + url_external)
+            offer_handler = OfferPageHandler(url_extension=url_extension)
             self._listed_pages_offer_handlers.append(offer_handler)
         return True
