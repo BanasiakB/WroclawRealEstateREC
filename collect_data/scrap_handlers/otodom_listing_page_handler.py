@@ -38,7 +38,55 @@ class ListingPageHandler:
     def listed_pages_offer_handlers(self) -> List[OfferPageHandler]:
         """Returns list with OfferPageHandler objects of offer pages that the object has revealed from listing website."""
         return self._listed_pages_offer_handlers.copy()
-    
+
+    @property
+    def listed_pages_offer_handlers_not_scrapped(self) -> List[OfferPageHandler]:
+        """
+        Returns list with OfferPageHandler objects of offer pages that the object has revealed from listing website,
+        but not yet have fully scrapped.
+        """
+        return [handler for handler in self._listed_pages_offer_handlers.copy() if not handler.page_scrapped]
+
+    @property
+    def listed_pages_offer_handlers_scrapped(self) -> List[OfferPageHandler]:
+        """
+        Returns list with OfferPageHandler objects of offer pages that the object has revealed from listing website,
+        and fully scrapped.
+        """
+        return [handler for handler in self._listed_pages_offer_handlers.copy() if handler.page_scrapped]
+
+    @property
+    def listed_pages_offer_handlers_not_scrapped_tabular(self) -> List[OfferPageHandler]:
+        """
+        Returns list with OfferPageHandler objects of offer pages that the object has revealed from listing website,
+        but not yet have scrapped tabular data.
+        """
+        return [handler for handler in self._listed_pages_offer_handlers.copy() if not handler.page_scrapped_tabular]
+
+    @property
+    def listed_pages_offer_handlers_scrapped_tabular(self) -> List[OfferPageHandler]:
+        """
+        Returns list with OfferPageHandler objects of offer pages that the object has revealed from listing website,
+        and scrapped tabular data.
+        """
+        return [handler for handler in self._listed_pages_offer_handlers.copy() if handler.page_scrapped_tabular]
+
+    @property
+    def listed_pages_offer_handlers_not_scrapped_image(self) -> List[OfferPageHandler]:
+        """
+        Returns list with OfferPageHandler objects of offer pages that the object has revealed from listing website,
+        but not yet have scrapped images.
+        """
+        return [handler for handler in self._listed_pages_offer_handlers.copy() if not handler.page_scrapped_image]
+
+    @property
+    def listed_pages_offer_handlers_scrapped_image(self) -> List[OfferPageHandler]:
+        """
+        Returns list with OfferPageHandler objects of offer pages that the object has revealed from listing website,
+        and scrapped images.
+        """
+        return [handler for handler in self._listed_pages_offer_handlers.copy() if handler.page_scrapped_image]
+
     @property
     def url_current(self) -> str:
         """Returns full url for the page with the current configuration."""
