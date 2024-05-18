@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 from bs4 import BeautifulSoup
 
-from ..scrap_utils import request_url_get_soup
+from ..scrap_utils import request_url, request_url_get_soup
 
 
 expected_info = {"Powierzchnia": "table-value-area", "Forma własności": "table-value-building_ownership", "Liczba pokoi": "table-value-rooms_num", 
@@ -26,7 +26,8 @@ class OfferPageHandler:
     page_scrapped_tabular: bool = False
     page_scrapped_image: bool = False
     page_soup: Optional[BeautifulSoup] = None
-    data: Dict[str, Any]
+    data_tabular: Dict[str, Any]
+    data_image: Dict[str, bytes]
     
     def __init__(
         self,
@@ -36,11 +37,16 @@ class OfferPageHandler:
         self.page_scrapped_tabular = self._check_if_page_under_url_was_scrapped_tabular()
         self.page_scrapped_iamge = self._check_if_page_under_url_was_scrapped_image()
 
-        self._data = {}
+        self._data_tabular = {}
+        self._data_image = {}
     
     @property
-    def data(self) -> Dict[str, Any]:
-        return self._data.copy()
+    def data_tabular(self) -> Dict[str, Any]:
+        return self._data_tabular.copy()
+    
+    @property
+    def data_image(self) -> Dict[str, bytes]:
+        return self._data_image.copy()
     
     @property
     def page_scrapped(self) -> bool:
@@ -74,21 +80,28 @@ class OfferPageHandler:
         if self.page_soup is None:
             self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
 
-        self._data["Price"] = self._find_in_soup('strong', {'aria-label': "Cena"})
-        self._data["loc"] = self._find_in_soup('a', {'aria-label': "Adres"})
-        self._data["Description"] = self._find_in_soup('div', {"data-cy": "adPageAdDescription"})
+        self._data_tabular["Price"] = self._find_in_soup('strong', {'aria-label': "Cena"})
+        self._data_tabular["loc"] = self._find_in_soup('a', {'aria-label': "Adres"})
+        self._data_tabular["Description"] = self._find_in_soup('div', {"data-cy": "adPageAdDescription"})
         for column_name, table_value in expected_info.items():
-            self._data[column_name] = self._find_in_soup('div', {"data-testid": table_value})
+            self._data_tabular[column_name] = self._find_in_soup('div', {"data-testid": table_value})
 
         self.page_scrapped_tabular = True
         return True
 
     def scrap_page_images(self, skip_if_already_scrapped: bool = True) -> bool:
-        if self.page_scrapped_tabular and skip_if_already_scrapped:
+        if self.page_scrapped_image and skip_if_already_scrapped:
             return False
 
         if self.page_soup is None:
             self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
+        
+        image_url = self.page_soup.picture.img["src"].split("/image;")[0] + "/image"
+        self._data_image[image_url] = request_url(image_url).content
+        
+        self.page_scrapped_image = True
+        return True
+        
     
     def _check_if_page_under_url_was_scrapped_tabular(self) -> bool:
         """
