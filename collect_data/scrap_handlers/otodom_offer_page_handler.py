@@ -1,4 +1,6 @@
-from typing import Any, Dict, Optional
+import json
+import os
+from typing import Any, Dict, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -51,7 +53,58 @@ class OfferPageHandler:
     @property
     def page_scrapped(self) -> bool:
         return self.page_scrapped_tabular and self.page_scrapped_image
-    
+
+    def get_tabular_data_base_path_and_file_name(self) -> Tuple[str, str]:
+        base_path = os.path.join("tmp_data", "tabular")
+        file_name = self.url_extension.replace("/", "_") + ".json"
+        return base_path, file_name
+
+
+    def save_tabular_data(self, to_database: bool = True) -> None:
+        if to_database:
+            self._save_tabular_data_database()
+        else:
+            self._save_tabular_data_local()
+
+    def _save_tabular_data_local(self) -> None:
+        base_path, file_name = self.get_tabular_data_base_path_and_file_name()
+        full_path = os.path.join(base_path, file_name)
+        os.makedirs(base_path, exist_ok=True)
+        
+        with open(full_path, "w") as f:
+            json.dump(self.data_tabular, f, sort_keys=True, indent=2)
+
+    def _save_tabular_data_database(self) -> None:
+        pass
+
+    def save_image_data(self, to_google_drive: bool = True) -> None:
+        if to_google_drive:
+            self._save_image_data_google_drive()
+        else:
+            self._save_image_data_local()
+
+    def _save_image_data_local(self) -> None:
+        base_path = os.path.join("tmp_data", "images", self.url_extension.replace("/", "_"))
+        os.makedirs(base_path, exist_ok=True)
+
+        for image_link, image in self.data_image.items():
+            file_name = image_link.replace("/", "_") + ".png"
+            full_path = os.path.join(base_path, file_name)
+        
+            with open(full_path, "wb") as f:
+                f.write(image)
+
+    def _save_image_data_google_drive(self) -> None:
+        pass
+
+    def save_data(
+        self,
+        tabular_to_database: bool = True,
+        image_to_google_drive: bool = True
+    ) -> None:
+        self.save_tabular_data(to_database=tabular_to_database)
+        self.save_image_data(to_google_drive=image_to_google_drive)
+
     def _find_in_soup(self, *args) -> Optional[str]:
         """
         Method for searching through the soup for given args and returning found value.
@@ -76,6 +129,12 @@ class OfferPageHandler:
         """
         if self.page_scrapped_tabular and skip_if_already_scrapped:
             return False
+        elif skip_if_already_scrapped:
+            file_path = os.path.join(*self.get_tabular_data_base_path_and_file_name())
+            if os.path.exists(file_path):
+                with open(file_path) as f:
+                    self._data_tabular = json.load(f)
+                return False
 
         if self.page_soup is None:
             self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
