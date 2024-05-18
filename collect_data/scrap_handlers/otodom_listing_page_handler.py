@@ -24,10 +24,12 @@ class ListingPageHandler:
         self,
         listed_pages_count_per_page: Optional[int] = None,
         already_scrapped_link_extensions: Optional[List[str]] = None,
+        page_num_max: Optional[int] = None,
     ) -> None:
         self._listed_pages_link_extensions: List[str] = already_scrapped_link_extensions or []
         self._listed_pages_offer_handlers: List[OfferPageHandler] = []
         self.listed_pages_count_per_page = listed_pages_count_per_page
+        self.page_num_max = page_num_max
     
     @property
     def listed_pages_link_extensions(self) -> List[str]:
