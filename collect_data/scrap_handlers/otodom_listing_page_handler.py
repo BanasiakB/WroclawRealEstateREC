@@ -2,8 +2,11 @@ from typing import List, Optional
 
 from bs4 import BeautifulSoup
 
+from project_utils.logger import get_logger
 from ..scrap_utils import request_url_get_soup
 from .otodom_offer_page_handler import OfferPageHandler
+
+logger = get_logger(__name__)
 
 
 class ListingPageHandler:
@@ -30,7 +33,9 @@ class ListingPageHandler:
         self._listed_pages_offer_handlers: List[OfferPageHandler] = []
         self.listed_pages_count_per_page = listed_pages_count_per_page
         self.page_num_max = page_num_max
-    
+
+        logger.info(f"Initialized ListingPageHandler object with args listed_pages_count_per_page={listed_pages_count_per_page}, page_num_max={page_num_max}.")
+
     @property
     def listed_pages_link_extensions(self) -> List[str]:
         """Returns list with link extension of offers that were find on scrapped listing pages."""
@@ -116,6 +121,7 @@ class ListingPageHandler:
         :param update_page_num_max_once_set: bool if the object's page_num_max should be overwritten if it is already set,
             defaults to False
         """
+        logger.info(f"Started updating ListingPageHandler metadata. Current metadata: page_num_current={self.page_num_current}, page_num_max={self.page_num_max}..")
         if increment_page_num_current:
             self.page_num_current += 1
 
@@ -124,6 +130,7 @@ class ListingPageHandler:
         page_num_max = self._get_page_num_max(soup=soup_page)
         if page_num_max is not None and (self.page_num_max is None or update_page_num_max_once_set):
             self.page_num_max = page_num_max
+        logger.info(f"Finished updating ListingPageHandler metadata. Current metadata: page_num_current={self.page_num_current}, page_num_max={self.page_num_max}..")
 
     def _get_page_num_max(self, soup: BeautifulSoup) -> Optional[int]:
         """
@@ -135,8 +142,9 @@ class ListingPageHandler:
         try:
             return int(soup.find("ul", {"class": "css-1vdlgt7"}).find_all("li")[-2].text)
         except:
+            logger.error("Error from ListingPageHandler with getting page_num_max parameter.")
             return None
-    
+
     def _get_offer_links_from_soup(self, soup: BeautifulSoup) -> List[str]:
         """
         Method for getting url link extensions to the offer pages from listing website.
@@ -144,9 +152,15 @@ class ListingPageHandler:
         :param soup: BeautifulSoup object created with the response of response from listing website
         :return: List with url link extensions of offers listed on the page of the given soup
         """
-        links = soup.find("div", {"data-cy": "search.listing.organic"}).find_all('a', {"data-cy": "listing-item-link"})
-        links = [link["href"] for link in links]
-        return links
+        logger.info("Getting offer links from the ListingPageHandler current page's soup..")
+        try:
+            links = soup.find("div", {"data-cy": "search.listing.organic"}).find_all('a', {"data-cy": "listing-item-link"})
+            links = [link["href"] for link in links]
+            logger.info(f"Success getting offer links. Offer count is {len(links)}.")
+            return links
+        except:
+            logger.error("Error getting offer links - returning empty list.")
+            return []
 
     def scrap_next(self) -> bool:
         """
@@ -154,9 +168,12 @@ class ListingPageHandler:
         object's lists and the metadata is being updated accordingly. Method returns bool value. True value indicates
         that the scrapping was performed normally. False value indicates that there are no more pages to scrap (for various reasons).
         """
+        logger.info("Started scrapping offer listing page..")
         if self.page_num_max and self.page_num_current > self.page_num_max:
+            logger.info(f"Scrapping offer listing page aborted - page_num_current ({self.page_num_current}) is greater than page_num_max ({self.page_num_max}).")
             return False
         if self.page_num_max is None and self.page_num_current > self._page_num_max_without_limit_set:
+            logger.info(f"Scrapping offer listing page aborted - page_num_max is not set and page_num_current ({self.page_num_current}) is greater than the default max ({self._page_num_max_without_limit_set}).")
             return False
 
         soup = request_url_get_soup(url=self.url_current)
@@ -168,4 +185,5 @@ class ListingPageHandler:
 
             offer_handler = OfferPageHandler(url_extension=url_extension)
             self._listed_pages_offer_handlers.append(offer_handler)
+        logger.info("Finished scrapping offer listing page.")
         return True
