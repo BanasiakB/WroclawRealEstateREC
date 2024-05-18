@@ -17,7 +17,7 @@ def try_exception(function):
 
 class Converter:
     def __init__(self, dictionary: Dict):
-        self.dictionary = dictionary
+        self.dictionary : Dict = dictionary
         self.converted_dictionary : Dict
 
     def convert_all(self) -> Dict:
@@ -25,8 +25,10 @@ class Converter:
         address_street, address_estate, address_district, address_city, address_province = self.convert_address()
         surface_converted = self.convert_surface()
         building_ownership_converted = self.replace_polish_char_and_whitespaces(config.building_ownership)
+        rooms_converted = self.convert_str_to_number(config.rooms)
+        construction_status_converted = self.replace_polish_char_and_whitespaces(config.construction_status)
         floor, floors_in_building = self.convert_floor_attribute()
-        balcony_garden_terrace_converted = self.replace_polish_char_and_whitespaces(config.balcony_garden_terrace)
+        outdoor_converted = self.replace_polish_char_and_whitespaces(config.outdoor)
         rent_converted = self.convert_price(config.rent)
         parking_space_converted = self.replace_polish_char_and_whitespaces(config.parking_space)
         heating_converted = self.replace_polish_char_and_whitespaces(config.heating)
@@ -53,9 +55,11 @@ class Converter:
             'address_province': address_province,
             'surface': surface_converted,
             'building_ownership': building_ownership_converted,
+            'rooms': rooms_converted,
+            'construction_status_converted': construction_status_converted,
             'floor': floor,
             'floors_in_building': floors_in_building,
-            'balcony_garden_terrace': balcony_garden_terrace_converted,
+            'outdoor': outdoor_converted,
             'rent': rent_converted,
             'parking_space': parking_space_converted,
             'heating': heating_converted,
@@ -71,7 +75,7 @@ class Converter:
             'equipment': equipment_converted,
             'extra_info': extra_info_converted,
             'building_material': building_material_converted,
-            'id': self.dictionary.get('id')
+            'link_id': self.dictionary.get('link_id')
         }
         return self.converted_dictionary
     
@@ -126,8 +130,6 @@ class Converter:
         return int(apartment_floor), int(floors)
 
 
-
-
 findings = {
         'cena': '480 000 zł', 
         'adres': 'ul. Królewiecka, Maślice, Fabryczna, Wrocław, dolnośląskie', 
@@ -140,4 +142,4 @@ findings = {
         'okna': 'plastikowe', 'winda': 'tak', 'media': 'brak informacji', 
         'zabezpieczenia': 'domofon / wideofon', 'wyposazenie': 'brak informacji', 
         'informacje_dodatkowe': 'brak informacji', 'material_budynku': 'silikat',
-        'id': '2998347'}
+        'link_id': '2998347'}
