@@ -4,7 +4,10 @@ from typing import Any, Dict, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
+from project_utils.logger import get_logger
 from ..scrap_utils import request_url, request_url_get_soup
+
+logger = get_logger(__name__)
 
 
 expected_info = {"Powierzchnia": "table-value-area", "Forma własności": "table-value-building_ownership", "Liczba pokoi": "table-value-rooms_num", 
@@ -25,6 +28,7 @@ class OfferPageHandler:
     """
     url_base: str = "https://www.otodom.pl"
     url_extension: str
+    url_full: str
     page_scrapped_tabular: bool = False
     page_scrapped_image: bool = False
     page_soup: Optional[BeautifulSoup] = None
@@ -41,24 +45,29 @@ class OfferPageHandler:
 
         self._data_tabular = {}
         self._data_image = {}
-    
+
+        logger.info(f"Initialized OfferPageHandler object for page {self.url_full}.")
+
     @property
     def data_tabular(self) -> Dict[str, Any]:
         return self._data_tabular.copy()
-    
+
     @property
     def data_image(self) -> Dict[str, bytes]:
         return self._data_image.copy()
-    
+
     @property
     def page_scrapped(self) -> bool:
         return self.page_scrapped_tabular and self.page_scrapped_image
+
+    @property
+    def url_full(self) -> bool:
+        return self.url_base + self.url_extension
 
     def get_tabular_data_base_path_and_file_name(self) -> Tuple[str, str]:
         base_path = os.path.join("tmp_data", "tabular")
         file_name = self.url_extension.replace("/", "_") + ".json"
         return base_path, file_name
-
 
     def save_tabular_data(self, to_database: bool = True) -> None:
         if to_database:
@@ -67,12 +76,14 @@ class OfferPageHandler:
             self._save_tabular_data_local()
 
     def _save_tabular_data_local(self) -> None:
+        logger.info(f"Saving tabular data to local file..")
         base_path, file_name = self.get_tabular_data_base_path_and_file_name()
         full_path = os.path.join(base_path, file_name)
         os.makedirs(base_path, exist_ok=True)
         
         with open(full_path, "w") as f:
             json.dump(self.data_tabular, f, sort_keys=True, indent=2)
+        logger.info(f"Saving successful. File path is {full_path}")
 
     def _save_tabular_data_database(self) -> None:
         pass
@@ -84,15 +95,18 @@ class OfferPageHandler:
             self._save_image_data_local()
 
     def _save_image_data_local(self) -> None:
+        logger.info(f"Saving image data to local file..")
         base_path = os.path.join("tmp_data", "images", self.url_extension.replace("/", "_"))
         os.makedirs(base_path, exist_ok=True)
 
-        for image_link, image in self.data_image.items():
+        data_image = self.data_image
+        for image_link, image in data_image.items():
             file_name = image_link.replace("/", "_") + ".png"
             full_path = os.path.join(base_path, file_name)
         
             with open(full_path, "wb") as f:
                 f.write(image)
+        logger.info(f"Saving successful. {len(data_image)} file/s saved to {base_path}")
 
     def _save_image_data_google_drive(self) -> None:
         pass
@@ -116,6 +130,7 @@ class OfferPageHandler:
         try:
             return self.page_soup.find(*args).get_text()
         except AttributeError:
+            logger.error(f"Error in finding in soup by args={args}.")
             return None
 
     def scrap_page_tabular(self, skip_if_already_scrapped: bool = True) -> bool:
@@ -127,17 +142,20 @@ class OfferPageHandler:
 
         :param skip_if_already_scrapped: bool indicating if the scrapping shoudl be skipped if the page was already scrapped, defaults to True
         """
+        logger.info(f"Started scrapping tabular data from offer page with url {self.url_full}")
         if self.page_scrapped_tabular and skip_if_already_scrapped:
+            logger.info("Scrapping tabular data from offer page aborted - page already scrapped and the tabular data is being stored.")
             return False
         elif skip_if_already_scrapped:
             file_path = os.path.join(*self.get_tabular_data_base_path_and_file_name())
             if os.path.exists(file_path):
                 with open(file_path) as f:
                     self._data_tabular = json.load(f)
+                logger.info(f"Scrapping tabular data from offer page aborted - page already scrapped to file. Tabular data was loaded from the file {file_path}.")
                 return False
 
         if self.page_soup is None:
-            self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
+            self.page_soup = request_url_get_soup(url=self.url_full)
 
         self._data_tabular["Price"] = self._find_in_soup('strong', {'aria-label': "Cena"})
         self._data_tabular["loc"] = self._find_in_soup('a', {'aria-label': "Adres"})
@@ -146,22 +164,25 @@ class OfferPageHandler:
             self._data_tabular[column_name] = self._find_in_soup('div', {"data-testid": table_value})
 
         self.page_scrapped_tabular = True
+        logger.info(f"Finished scrapping tabular data from offer page with url {self.url_full}.")
         return True
 
     def scrap_page_images(self, skip_if_already_scrapped: bool = True) -> bool:
+        logger.info(f"Started scrapping image data from offer page with url {self.url_full}")
         if self.page_scrapped_image and skip_if_already_scrapped:
+            logger.info("Scrapping image data from offer page aborted - page already scrapped and the image data is being stored.")
             return False
 
         if self.page_soup is None:
-            self.page_soup = request_url_get_soup(url=self.url_base + self.url_extension)
+            self.page_soup = request_url_get_soup(url=self.url_full)
         
         image_url = self.page_soup.picture.img["src"].split("/image;")[0] + "/image"
         self._data_image[image_url] = request_url(image_url).content
         
         self.page_scrapped_image = True
+        logger.info(f"Finished scrapping image data from offer page with url {self.url_full}.")
         return True
-        
-    
+
     def _check_if_page_under_url_was_scrapped_tabular(self) -> bool:
         """
         Method checks if the page's tabular data was already scrapped by fetching the data from the storage database
@@ -169,7 +190,7 @@ class OfferPageHandler:
         exists there.
         """
         return False
-    
+
     def _check_if_page_under_url_was_scrapped_image(self) -> bool:
         """Method checks if the page's images were already scrapped by fetching the data from the google drive."""
         return False

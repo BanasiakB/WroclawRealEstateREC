@@ -3,6 +3,10 @@ import requests
 
 from bs4 import BeautifulSoup
 
+from project_utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 userAgents=[
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -14,10 +18,15 @@ userAgents=[
 
 
 def request_url(url: str) -> requests.Response:
+    logger.info(f"Sending GET request to url {url}.")
     response = requests.get(url, headers={'User-Agent': random.choice(userAgents)})
     
     if response.status_code != 200:
-        raise ConnectionError(f"Failed to fetch search results. Status code: {response.status_code}")
+        message = f"Failed to fetch search results. Status code: {response.status_code}."
+        logger.error(message)
+        raise ConnectionError(message)
+
+    logger.info("Response from GET request got successfully.")
     return response
 
 def request_url_get_soup(url: str) -> BeautifulSoup:
