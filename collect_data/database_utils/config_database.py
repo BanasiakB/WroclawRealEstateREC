@@ -6,7 +6,6 @@ from config import *
 
 conn = sqlite3.connect('real_estate.db')
 c = conn.cursor()
-c.execute('''DROP TABLE otodom''')
 
 
 class DBColumnContainer:
