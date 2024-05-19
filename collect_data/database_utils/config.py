@@ -39,4 +39,5 @@ equipment = DBColumn(db_name="equipment", sql_datatype="VARCHAR")
 extra_info = DBColumn(db_name="extra_info", sql_datatype="VARCHAR") 
 building_material = DBColumn(db_name="building_material", sql_datatype="VARCHAR")
 link_id = DBColumn(db_name="link_id", sql_datatype="VARCHAR")
+description = DBColumn(db_name="description", sql_datatype="VARCHAR")
 

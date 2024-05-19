@@ -1,3 +1,6 @@
+import csv
+import json
+import os
 import random
 import requests
 
@@ -33,3 +36,18 @@ def request_url_get_soup(url: str) -> BeautifulSoup:
     response = request_url(url=url)
     soup = BeautifulSoup(response.text, "html.parser")
     return soup
+
+def load_jsons_and_return_csv(base_path: str = os.path.join("tmp_data", "tabular")):
+    files = os.listdir(base_path)
+    data = []
+    for file_name in files:
+        file_path = os.path.join(base_path, file_name)
+        with open(file_path) as f:
+            file_data = json.load(f)
+        data.append(file_data)
+
+    keys = data[0].keys()
+    with open('otodom_wroclaw.csv', 'w', newline='') as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(data)

@@ -107,7 +107,8 @@ class Converter:
             database_fields_config.equipment.db_name: equipment_converted,
             database_fields_config.extra_info.db_name: extra_info_converted,
             database_fields_config.building_material.db_name: building_material_converted,
-            database_fields_config.link_id.db_name: self.dictionary.get('link_id')
+            database_fields_config.link_id.db_name: self.dictionary.get(offer_fields_config.link_id.data_name),
+            database_fields_config.description.db_name: self.dictionary.get(offer_fields_config.description.data_name),
         }
         self._converted = True
         return self.converted_dictionary

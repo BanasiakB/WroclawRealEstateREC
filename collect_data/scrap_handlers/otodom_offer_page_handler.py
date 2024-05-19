@@ -165,6 +165,8 @@ class OfferPageHandler:
         self._data_tabular[offer_fields_config.price.data_name] = self._find_in_soup('strong', {'aria-label': "Cena"})
         self._data_tabular[offer_fields_config.address.data_name] = self._find_in_soup('a', {'aria-label': "Adres"})
         self._data_tabular[offer_fields_config.description.data_name] = self._find_in_soup('div', {"data-cy": "adPageAdDescription"})
+        self._data_tabular[offer_fields_config.link_id.data_name] = self.url_extension
+        
         for field in offer_fields_config.fields_with_html_name:
             self._data_tabular[field.data_name] = self._find_in_soup('div', {"data-testid": field.html_name})
 
@@ -197,7 +199,7 @@ class OfferPageHandler:
                 with open(file_path) as f:
                     self._data_tabular = json.load(f)
                 logger.info(f"File loaded successfully.")
-                return False
+                return True
             except:
                 logger.warning(f"Error when trying to load file {file_path}. Removing file and assuming the page wasn't scrapped")
                 os.remove(file_path)
