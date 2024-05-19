@@ -1,4 +1,5 @@
-from ..database_utils import config
+from ..database_utils import config as database_fields_config
+from collect_data.scrap_handlers.config import offer_fields_config
 import re
 from functools import wraps
 from typing import Optional, Tuple, Dict
@@ -21,29 +22,29 @@ class Converter:
         self.converted_dictionary : Dict
 
     def convert_all(self) -> Dict:
-        price_converted = self.convert_price(config.price)
+        price_converted = self.convert_price(offer_fields_config.price.data_name)
         address_street, address_estate, address_district, address_city, address_province = self.convert_address()
         surface_converted = self.convert_surface()
-        building_ownership_converted = self.replace_polish_char_and_whitespaces(config.building_ownership)
-        rooms_converted = self.convert_str_to_number(config.rooms)
-        construction_status_converted = self.replace_polish_char_and_whitespaces(config.construction_status)
+        building_ownership_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.building_ownership.data_name)
+        rooms_converted = self.convert_str_to_number(offer_fields_config.rooms.data_name)
+        construction_status_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.construction_status.data_name)
         floor, floors_in_building = self.convert_floor_attribute()
-        outdoor_converted = self.replace_polish_char_and_whitespaces(config.outdoor)
-        rent_converted = self.convert_price(config.rent)
-        parking_space_converted = self.replace_polish_char_and_whitespaces(config.parking_space)
-        heating_converted = self.replace_polish_char_and_whitespaces(config.heating)
-        market_converted = self.replace_polish_char_and_whitespaces(config.market)
-        advertiser_type_converted = self.replace_polish_char_and_whitespaces(config.advertiser_type)
-        free_from_converted = self.replace_polish_char_and_whitespaces(config.free_from)
-        build_year_converted = self.convert_str_to_number(config.build_year)
-        building_type_converted = self.replace_polish_char_and_whitespaces(config.building_type)
-        windows_converted = self.replace_polish_char_and_whitespaces(config.windows)
-        lift_converted = self.replace_polish_char_and_whitespaces(config.lift)
-        media_converted = self.replace_polish_char_and_whitespaces(config.media)
-        securities_converted = self.replace_polish_char_and_whitespaces(config.securities)
-        equipment_converted = self.replace_polish_char_and_whitespaces(config.equipment)
-        extra_info_converted = self.replace_polish_char_and_whitespaces(config.extra_info)
-        building_material_converted = self.replace_polish_char_and_whitespaces(config.building_material)
+        outdoor_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.outdoor.data_name)
+        rent_converted = self.convert_price(offer_fields_config.rent.data_name)
+        parking_space_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.parking_space.data_name)
+        heating_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.heating.data_name)
+        market_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.market.data_name)
+        advertiser_type_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.advertiser_type.data_name)
+        free_from_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.free_from.data_name)
+        build_year_converted = self.convert_str_to_number(offer_fields_config.build_year.data_name)
+        building_type_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.building_type.data_name)
+        windows_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.windows.data_name)
+        lift_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.lift.data_name)
+        media_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.media.data_name)
+        securities_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.securities.data_name)
+        equipment_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.equipment.data_name)
+        extra_info_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.extra_info.data_name)
+        building_material_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.building_material.data_name)
 
 
         self.converted_dictionary = {
@@ -81,7 +82,7 @@ class Converter:
     
     @try_exception
     def replace_polish_char_and_whitespaces(self, text: str) -> Optional[str]:
-        text_from_directory = self.dictionary.get(text.polish_name)
+        text_from_directory = self.dictionary.get(text)
         ascii_text = unidecode(text_from_directory)
         # Remove all whitespaces
         result_text = re.sub(r'\s+', '_', ascii_text)
@@ -94,13 +95,13 @@ class Converter:
     @try_exception
     def convert_price(self, feature: str) -> Optional[int]:
         #  Remove spaces and the currency symbol
-        price = self.dictionary.get(feature.polish_name)
+        price = self.dictionary.get(feature)
         return int(re.sub(r'[^0-9]', '', price))
     
     @try_exception
     def convert_address(self) -> Optional[Tuple[str, str, str, str, str]]:
         # Divide into separate parts that creates address from the link
-        address = self.dictionary.get(config.address.polish_name)
+        address = self.dictionary.get(offer_fields_config.address.data_name)
         list_of_address_elements = unidecode(address).split(', ')
         if len(list_of_address_elements) != 5:
             address_street = None
@@ -115,17 +116,17 @@ class Converter:
     @try_exception
     def convert_surface(self) -> Optional[float]:
         # Remove unit and convert number to float value
-        surface = self.dictionary.get(config.surface.polish_name)
+        surface = self.dictionary.get(offer_fields_config.surface.data_name)
         numeric_text = re.sub(r'[^\d,]', '', surface)
         return float(numeric_text.replace(',', '.'))
 
     @try_exception
     def convert_str_to_number(self, feature: str) -> Optional[int]:
-        return(int(self.dictionary.get(feature.polish_name)))
+        return(int(self.dictionary.get(feature)))
 
     @try_exception
     def convert_floor_attribute(self) -> Optional[Tuple[int, int]]:
-        floor = self.dictionary.get(config.floor.polish_name)
+        floor = self.dictionary.get(offer_fields_config.floor.data_name)
         apartment_floor, floors = floor.split('/')
         return int(apartment_floor), int(floors)
 

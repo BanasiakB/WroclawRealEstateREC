@@ -6,20 +6,11 @@ from bs4 import BeautifulSoup
 
 from project_utils.logger import get_logger
 from ..scrap_utils import request_url, request_url_get_soup
+from .config import offer_fields_config
 
 logger = get_logger(__name__)
 
 
-expected_info = {"Powierzchnia": "table-value-area", "Forma własności": "table-value-building_ownership", "Liczba pokoi": "table-value-rooms_num", 
-        "Stan wykończenia": "table-value-construction_status", "Piętro": "table-value-floor", "Balkon / ogród / taras": "table-value-outdoor", 
-        "Czynsz": "table-value-rent", "Miejsce parkingowe": "table-value-car", "Ogrzewanie": "table-value-heating", 
-        
-        # Informacje z drugiej tabelki
-        "Rynek": "table-value-market", "Typ ogłoszeniodawcy": "table-value-advertiser_type", "Dostępne od": "table-value-free_from", "Rok budowy": "table-value-build_year", 
-        "Rodzaj zabudowy": "table-value-building_type", "Okna": "table-value-windows_type", "Winda": "table-value-lift", "Media": "table-value-media_types", 
-        "Zabezpieczenia": "table-value-security_types", "Wyposażenie": "table-value-equipment_types", "Informacje dodatkowe": "table-value-extras_types", "Materiał budynku": "table-value-building_material"}
-       
-    
 class OfferPageHandler:
     """
     Intention of the class is to be used for scrapping individual offer webpage and save the data to the storage.
@@ -157,11 +148,11 @@ class OfferPageHandler:
         if self.page_soup is None:
             self.page_soup = request_url_get_soup(url=self.url_full)
 
-        self._data_tabular["Price"] = self._find_in_soup('strong', {'aria-label': "Cena"})
-        self._data_tabular["loc"] = self._find_in_soup('a', {'aria-label': "Adres"})
-        self._data_tabular["Description"] = self._find_in_soup('div', {"data-cy": "adPageAdDescription"})
-        for column_name, table_value in expected_info.items():
-            self._data_tabular[column_name] = self._find_in_soup('div', {"data-testid": table_value})
+        self._data_tabular[offer_fields_config.price.data_name] = self._find_in_soup('strong', {'aria-label': "Cena"})
+        self._data_tabular[offer_fields_config.address.data_name] = self._find_in_soup('a', {'aria-label': "Adres"})
+        self._data_tabular[offer_fields_config.description.data_name] = self._find_in_soup('div', {"data-cy": "adPageAdDescription"})
+        for field in offer_fields_config.fields_with_html_name:
+            self._data_tabular[field.data_name] = self._find_in_soup('div', {"data-testid": field.html_name})
 
         self.page_scrapped_tabular = True
         logger.info(f"Finished scrapping tabular data from offer page with url {self.url_full}.")
