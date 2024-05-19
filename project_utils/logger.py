@@ -16,7 +16,7 @@ def get_logger(name: str) -> Logger:
 
         sh = logging.StreamHandler()
         sh.setFormatter(formatter)
-        # sh.setLevel(logging.INFO)
+        sh.setLevel(logging.WARNING)
         logger.addHandler(sh)
         
         logs_dir_name = "tmp_logs"
