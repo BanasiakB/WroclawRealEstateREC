@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
+from collect_data.converters.convert_data import Converter
 from project_utils.logger import get_logger
 from ..scrap_utils import request_url, request_url_get_soup
 from .config import offer_fields_config
@@ -24,6 +25,8 @@ class OfferPageHandler:
     page_scrapped_image: bool = False
     page_soup: Optional[BeautifulSoup] = None
     data_tabular: Dict[str, Any]
+    data_tabular_converted: Dict[str, Any]
+    data_converter: Optional[Converter] = None
     data_image: Dict[str, bytes]
     
     def __init__(
@@ -55,6 +58,17 @@ class OfferPageHandler:
     def url_full(self) -> bool:
         return self.url_base + self.url_extension
 
+    @property
+    def data_tabular_converted(self) -> Dict[str, Any]:
+        if self.data_converter is None:
+            message = f"OfferPageHandler object with url {self.url_full} has no converter."
+            logger.error(message)
+            raise Exception(message)
+        else:
+            if not self.data_converter.converted:
+                self.data_converter.convert_all()
+            return self.data_converter.converted_dictionary
+
     def get_tabular_data_base_path_and_file_name(self) -> Tuple[str, str]:
         base_path = os.path.join("tmp_data", "tabular")
         file_name = self.url_extension.replace("/", "_") + ".json"
@@ -73,7 +87,7 @@ class OfferPageHandler:
         os.makedirs(base_path, exist_ok=True)
         
         with open(full_path, "w") as f:
-            json.dump(self.data_tabular, f, sort_keys=True, indent=2)
+            json.dump(self.data_tabular_converted, f, sort_keys=True, indent=2)
         logger.info(f"Saving successful. File path is {full_path}")
 
     def _save_tabular_data_database(self) -> None:
@@ -155,6 +169,7 @@ class OfferPageHandler:
             self._data_tabular[field.data_name] = self._find_in_soup('div', {"data-testid": field.html_name})
 
         self.page_scrapped_tabular = True
+        self.data_converter = Converter(dictionary=self.data_tabular)
         logger.info(f"Finished scrapping tabular data from offer page with url {self.url_full}.")
         return True
 

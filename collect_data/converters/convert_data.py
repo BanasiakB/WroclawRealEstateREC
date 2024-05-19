@@ -2,24 +2,55 @@ from ..database_utils import config as database_fields_config
 from collect_data.scrap_handlers.config import offer_fields_config
 import re
 from functools import wraps
-from typing import Optional, Tuple, Dict
+from typing import Any, Optional, Tuple, Dict, Union, Callable
 from unidecode import unidecode
 
 
-def try_exception(function):
-    @wraps(function)
-    def foo(*args, **kwargs):
-        try:
-            return function(*args, **kwargs)
-        except:
-            return None
-    return foo
+def try_exception(arg: Union[Callable, int]):
+    if type(arg) == int:
+        num_return_nans = arg
+    elif callable(arg):
+        num_return_nans = 1
+    else:
+        raise Exception(f"try_exception decorator is meant to be used without argument or with 1 int argument, not {arg}")
+
+    def decorator_func(foo):
+        @wraps(foo)
+        def wrapped_func(*args, **kwargs):
+            try:
+                return foo(*args, **kwargs)
+            except:
+                if num_return_nans == 1:
+                    return None
+                else:
+                    return tuple(None for _ in range(num_return_nans))
+        return wrapped_func
+
+    if callable(arg):
+        return decorator_func(arg)
+    else:
+        return decorator_func
 
 
 class Converter:
+    dictionary: Dict[str, Any]
+    converted_dictionary: Dict[str, Any]
+    converted: bool
+
     def __init__(self, dictionary: Dict):
-        self.dictionary : Dict = dictionary
-        self.converted_dictionary : Dict
+        self.dictionary : Dict[str, Any] = dictionary
+        self._converted_dictionary : Dict[str, Any]
+        self._converted = False
+
+    @property
+    def converted(self) -> bool:
+        return self._converted
+
+    @property
+    def converted_dictionary(self) -> Dict[str, Any]:
+        if not self._converted:
+            self.convert_all()
+        return self._converted_dictionary.copy()
 
     def convert_all(self) -> Dict:
         price_converted = self.convert_price(offer_fields_config.price.data_name)
@@ -47,37 +78,38 @@ class Converter:
         building_material_converted = self.replace_polish_char_and_whitespaces(offer_fields_config.building_material.data_name)
 
 
-        self.converted_dictionary = {
-            database_fields_config.price: price_converted,
-            database_fields_config.address_street: address_street,
-            database_fields_config.address_estate: address_estate,
-            database_fields_config.address_district: address_district,
-            database_fields_config.address_city: address_city,
-            database_fields_config.address_province: address_province,
-            database_fields_config.surface: surface_converted,
-            database_fields_config.building_ownership: building_ownership_converted,
-            database_fields_config.rooms: rooms_converted,
-            database_fields_config.construction_status: construction_status_converted,
-            database_fields_config.floor: floor,
-            database_fields_config.floors_in_building: floors_in_building,
-            database_fields_config.outdoor: outdoor_converted,
-            database_fields_config.rent: rent_converted,
-            database_fields_config.parking_space: parking_space_converted,
-            database_fields_config.heating: heating_converted,
-            database_fields_config.market: market_converted,
-            database_fields_config.advertiser_type: advertiser_type_converted,
-            database_fields_config.free_from: free_from_converted,
-            database_fields_config.build_year: build_year_converted,
-            database_fields_config.building_type: building_type_converted,
-            database_fields_config.windows: windows_converted,
-            database_fields_config.lift: lift_converted,
-            database_fields_config.media: media_converted,
-            database_fields_config.securities: securities_converted,
-            database_fields_config.equipment: equipment_converted,
-            database_fields_config.extra_info: extra_info_converted,
-            database_fields_config.building_material: building_material_converted,
-            database_fields_config.link_id: self.dictionary.get('link_id')
+        self._converted_dictionary = {
+            database_fields_config.price.db_name: price_converted,
+            database_fields_config.address_street.db_name: address_street,
+            database_fields_config.address_estate.db_name: address_estate,
+            database_fields_config.address_district.db_name: address_district,
+            database_fields_config.address_city.db_name: address_city,
+            database_fields_config.address_province.db_name: address_province,
+            database_fields_config.surface.db_name: surface_converted,
+            database_fields_config.building_ownership.db_name: building_ownership_converted,
+            database_fields_config.rooms.db_name: rooms_converted,
+            database_fields_config.construction_status.db_name: construction_status_converted,
+            database_fields_config.floor.db_name: floor,
+            database_fields_config.floors_in_building.db_name: floors_in_building,
+            database_fields_config.outdoor.db_name: outdoor_converted,
+            database_fields_config.rent.db_name: rent_converted,
+            database_fields_config.parking_space.db_name: parking_space_converted,
+            database_fields_config.heating.db_name: heating_converted,
+            database_fields_config.market.db_name: market_converted,
+            database_fields_config.advertiser_type.db_name: advertiser_type_converted,
+            database_fields_config.free_from.db_name: free_from_converted,
+            database_fields_config.build_year.db_name: build_year_converted,
+            database_fields_config.building_type.db_name: building_type_converted,
+            database_fields_config.windows.db_name: windows_converted,
+            database_fields_config.lift.db_name: lift_converted,
+            database_fields_config.media.db_name: media_converted,
+            database_fields_config.securities.db_name: securities_converted,
+            database_fields_config.equipment.db_name: equipment_converted,
+            database_fields_config.extra_info.db_name: extra_info_converted,
+            database_fields_config.building_material.db_name: building_material_converted,
+            database_fields_config.link_id.db_name: self.dictionary.get('link_id')
         }
+        self._converted = True
         return self.converted_dictionary
     
     @try_exception
@@ -98,8 +130,8 @@ class Converter:
         price = self.dictionary.get(feature)
         return int(re.sub(r'[^0-9]', '', price))
     
-    @try_exception
-    def convert_address(self) -> Optional[Tuple[str, str, str, str, str]]:
+    @try_exception(5)
+    def convert_address(self) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]]:
         # Divide into separate parts that creates address from the link
         address = self.dictionary.get(offer_fields_config.address.data_name)
         list_of_address_elements = unidecode(address).split(', ')
@@ -124,8 +156,8 @@ class Converter:
     def convert_str_to_number(self, feature: str) -> Optional[int]:
         return(int(self.dictionary.get(feature)))
 
-    @try_exception
-    def convert_floor_attribute(self) -> Optional[Tuple[int, int]]:
+    @try_exception(2)
+    def convert_floor_attribute(self) -> Tuple[Optional[int], Optional[int]]:
         floor = self.dictionary.get(offer_fields_config.floor.data_name)
         apartment_floor, floors = floor.split('/')
         return int(apartment_floor), int(floors)
