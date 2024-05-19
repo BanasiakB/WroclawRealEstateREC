@@ -168,7 +168,7 @@ class ListingPageHandler:
         object's lists and the metadata is being updated accordingly. Method returns bool value. True value indicates
         that the scrapping was performed normally. False value indicates that there are no more pages to scrap (for various reasons).
         """
-        logger.info("Started scrapping offer listing page..")
+        logger.info(f"Started scrapping offer listing page of number {self.page_num_current}..")
         if self.page_num_max and self.page_num_current > self.page_num_max:
             logger.info(f"Scrapping offer listing page aborted - page_num_current ({self.page_num_current}) is greater than page_num_max ({self.page_num_max}).")
             return False
