@@ -4,7 +4,7 @@ from typing import List
 from config import *
 
 
-conn = sqlite3.connect('real_estate.db')
+conn = sqlite3.connect('tmp_real_estate.db')
 c = conn.cursor()
 
 
