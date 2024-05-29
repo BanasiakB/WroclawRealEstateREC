@@ -63,3 +63,7 @@ services:
       - type: bind
         source: ${PROJECT_DIR:-.}/pyspark_tools
         target: /home/jovyan/pyspark_tools/
+      - type: bind
+        source: ${PROJECT_DIR:-.}/tmp_data
+        target: /home/jovyan/tmp_data/
+        read_only: true
