@@ -59,3 +59,7 @@ services:
       - '8888:8888'
       - '4040:4040'
       - '4041:4041'
+    volumes:
+      - type: bind
+        source: ${PROJECT_DIR:-.}/pyspark_tools
+        target: /home/jovyan/pyspark_tools/
