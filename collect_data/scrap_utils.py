@@ -37,7 +37,7 @@ def request_url_get_soup(url: str) -> BeautifulSoup:
     soup = BeautifulSoup(response.text, "html.parser")
     return soup
 
-def load_jsons_and_return_csv(base_path: str = os.path.join("tmp_data", "tabular")):
+def load_jsons_and_return_csv(base_path: str = os.path.join("data", "tabular")):
     files = os.listdir(base_path)
     data = []
     for file_name in files:

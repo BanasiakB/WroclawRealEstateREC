@@ -160,3 +160,7 @@ cython_debug/
 #.idea/
 service_account.json
 tmp*
+data/*
+
+.devcontainer/*
+.github/*

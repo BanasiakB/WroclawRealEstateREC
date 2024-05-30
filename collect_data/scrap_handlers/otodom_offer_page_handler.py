@@ -74,12 +74,12 @@ class OfferPageHandler:
             return self.data_converter.converted_dictionary
 
     def get_tabular_data_base_path_and_file_name(self) -> Tuple[str, str]:
-        base_path = os.path.join("tmp_data", "tabular")
+        base_path = os.path.join("data", "tabular")
         file_name = self.url_extension.replace("/", "_") + ".json"
         return base_path, file_name
 
     def get_image_data_base_path(self):
-        return os.path.join("tmp_data", "images", self.url_extension.replace("/", "_"))
+        return os.path.join("data", "images", self.url_extension.replace("/", "_"))
 
     def save_tabular_data(self, to_database: bool = True) -> None:
         if to_database:
