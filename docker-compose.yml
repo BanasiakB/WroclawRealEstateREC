@@ -67,3 +67,5 @@ services:
         source: ${PROJECT_DIR:-.}/data
         target: /home/jovyan/data/
         read_only: true
+    environment:
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN}
