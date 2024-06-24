@@ -2,7 +2,9 @@ version: '3.7'
 
 services:
   spark-master:
-    image: bitnami/spark:3.5.0
+    build:
+      context: .
+      dockerfile: spark.dockerfile
     environment:
       - SPARK_MODE=master
 #      - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -24,7 +26,9 @@ services:
       - '7077:7077'
 
   spark-worker-1:
-    image: bitnami/spark:3.5.0
+    build:
+      context: .
+      dockerfile: spark.dockerfile
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -41,7 +45,10 @@ services:
         read_only: true
 
   spark-worker-2:
-    image: bitnami/spark:3.5.0
+#    image: bitnami/spark:3.5.0
+    build:
+      context: .
+      dockerfile: spark.dockerfile
     environment:
      - SPARK_MODE=worker
      - SPARK_MASTER_URL=spark://spark-master:7077
@@ -58,7 +65,10 @@ services:
         read_only: true
 
   # spark-worker-3:
-  #   image: bitnami/spark:3.5.0
+  #  image: bitnami/spark:3.5.0
+    # build:
+    #   context: .
+    #   dockerfile: spark.dockerfile
   #   environment:
   #     - SPARK_MODE=worker
   #     - SPARK_MASTER_URL=spark://spark-master:7077
@@ -75,7 +85,9 @@ services:
   #       read_only: true
 
   # spark-worker-4:
-  #   image: bitnami/spark:3.5.0
+    # build:
+    #   context: .
+    #   dockerfile: spark.dockerfile
   #   environment:
   #    - SPARK_MODE=worker
   #    - SPARK_MASTER_URL=spark://spark-master:7077
